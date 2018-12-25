@@ -25,11 +25,10 @@ export default class Game {
     }
 
     init() {
-        this.restartButton.classList.add('hide');
         this.xIsNext = true;
         this.boardHandler = ({target: button}) => {
-            let row = +button.getAttribute('data-row');
-            let column = +button.getAttribute('data-column');
+            let index = button.getAttribute('data-index');
+            let [row, column] = index.split(':');
 
             if (this.squares[row][column]) return;
                 this.squares[row][column] = this.xIsNext
@@ -37,8 +36,8 @@ export default class Game {
                     : 'O';
 
             this.xIsNext = !this.xIsNext;
-            this.renderSquares();
-            this.renderResult();
+            this.renderPressedSquare(row, column);
+            this.renderGameInfo();
             this.checkWinner();
         };
 
@@ -53,11 +52,16 @@ export default class Game {
         };
 
         this.initListeners();
-        this.renderSquares();
-        this.renderResult();
+        this.renderAllSquares();
+        this.renderGameInfo();
     }
 
-    renderSquares() {
+    renderPressedSquare(row, column) {
+        let pressedSquare = document.querySelector(`[data-index='${row}:${column}']`);
+        pressedSquare.innerText = this.squares[row][column];
+    }
+
+    renderAllSquares() {
         [...this.board.children].forEach(boardRow => {
             [...boardRow.children].forEach(button => {
                 let row = +button.getAttribute('data-row');
@@ -67,7 +71,7 @@ export default class Game {
         });
     }
 
-    renderResult() {
+    renderGameInfo() {
         this.gameInfo.innerText = this.xIsNext
             ? 'Next player: X'
             : 'Next player: O';
@@ -109,7 +113,6 @@ export default class Game {
         let winner = this.calculateWinner();
         if (winner) {
             this.renderWinner(winner);
-            this.restartButton.classList.remove('hide');
             this.board.removeEventListener('click', this.boardHandler);
         }
     }
@@ -118,7 +121,4 @@ export default class Game {
         this.board.addEventListener('click', this.boardHandler);
         this.restartButton.addEventListener('click', this.resetHandler);
     }
-
-
-
 }
