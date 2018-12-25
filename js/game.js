@@ -48,11 +48,12 @@ export default class Game {
                 Array(3).fill(null),
             ];
             this.restartButton.removeEventListener('click', this.resetHandler);
+            this.board.removeEventListener('click', this.boardHandler);
             this.init();
         };
 
         this.initListeners();
-        this.renderAllSquares();
+        this.resetAllSquares();
         this.renderGameInfo();
     }
 
@@ -61,12 +62,10 @@ export default class Game {
         pressedSquare.innerText = this.squares[row][column];
     }
 
-    renderAllSquares() {
+    resetAllSquares() {
         [...this.board.children].forEach(boardRow => {
             [...boardRow.children].forEach(button => {
-                let row = +button.getAttribute('data-row');
-                let column = +button.getAttribute('data-column');
-                button.innerText = this.squares[row][column];
+                button.innerText = null;
             })
         });
     }
