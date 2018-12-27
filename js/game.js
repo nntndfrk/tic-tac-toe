@@ -4,36 +4,35 @@ export default class Game {
         this.board = board;
         this.gameInfo = gameInfo;
         this.restartButton = restartButton;
-        this.xIsNext = true;
-        this.squares = [
-            Array(3).fill(null),
-            Array(3).fill(null),
-            Array(3).fill(null),
-        ];
-        this.winnerMatrix = [
-            [[0,0], [0,1], [0,2]],
-            [[1,0], [1,1], [1,2]],
-            [[2,0], [2,1], [2,2]],
-            [[0,0], [1,0], [2,0]],
-            [[0,1], [1,1], [2,1]],
-            [[0,2], [1,2], [2,2]],
-            [[0,0], [1,1], [2,2]],
-            [[0,2], [1,1], [2,0]],
-        ];
+        this.xIsNext = null;
+        this.squares = null;
         this.boardHandler = null;
         this.resetHandler = null;
+        this.isGameFinished = null;
+        
+        this.winnerMatrix = [
+            [[0, 0], [0, 1], [0, 2]],
+            [[1, 0], [1, 1], [1, 2]],
+            [[2, 0], [2, 1], [2, 2]],
+            [[0, 0], [1, 0], [2, 0]],
+            [[0, 1], [1, 1], [2, 1]],
+            [[0, 2], [1, 2], [2, 2]],
+            [[0, 0], [1, 1], [2, 2]],
+            [[0, 2], [1, 1], [2, 0]],
+        ];
+        this.initListeners();
+        this.startNewGame();
     }
 
-    init() {
-        this.xIsNext = true;
-        this.boardHandler = ({target: button}) => {
+    initListeners() {
+        this.boardHandler = ({ target: button }) => {
             let index = button.getAttribute('data-index');
             let [row, column] = index.split(':');
 
-            if (this.squares[row][column]) return;
-                this.squares[row][column] = this.xIsNext
-                    ? 'X'
-                    : 'O';
+            if (this.squares[row][column] || this.isGameFinished === true) return;
+            this.squares[row][column] = this.xIsNext
+                ? 'X'
+                : 'O';
 
             this.xIsNext = !this.xIsNext;
             this.renderPressedSquare(row, column);
@@ -41,28 +40,26 @@ export default class Game {
             this.checkWinner();
         };
 
-        this.resetHandler = () => {
-            this.squares = [
-                Array(3).fill(null),
-                Array(3).fill(null),
-                Array(3).fill(null),
-            ];
-            this.restartButton.removeEventListener('click', this.resetHandler);
-            this.board.removeEventListener('click', this.boardHandler);
-            this.init();
+        this.resetHandler = () => {      
+            this.startNewGame();
         };
+        this.board.addEventListener('click', this.boardHandler);
+        this.restartButton.addEventListener('click', this.resetHandler);
+    }
 
-        this.initListeners();
-        this.resetAllSquares();
+    startNewGame() {
+        this.squares = [
+            Array(3).fill(null),
+            Array(3).fill(null),
+            Array(3).fill(null),
+        ];
+        this.xIsNext = true;
+        this.isGameFinished = false;
+        this.initAllSquares();
         this.renderGameInfo();
     }
-
-    renderPressedSquare(row, column) {
-        let pressedSquare = document.querySelector(`[data-index='${row}:${column}']`);
-        pressedSquare.innerText = this.squares[row][column];
-    }
-
-    resetAllSquares() {
+    
+    initAllSquares() {
         [...this.board.children].forEach(boardRow => {
             [...boardRow.children].forEach(button => {
                 button.innerText = null;
@@ -76,6 +73,31 @@ export default class Game {
             : 'Next player: O';
     }
 
+    renderPressedSquare(row, column) {
+        let pressedSquare = document.querySelector(`[data-index='${row}:${column}']`);
+        pressedSquare.innerText = this.squares[row][column];
+    }
+
+    
+    calculateWinner() {
+        for (let winnerLine of this.winnerMatrix) {
+            let valueList = [];
+            for (let [y, x] of winnerLine) {
+                valueList.push(this.squares[y][x]);
+            }
+            
+            if (valueList.every(value => value === 'X')) {
+                return 1;
+            } else if (valueList.every(value => value === 'O')) {
+                return 2;
+            }
+        }
+        
+        if (this.squares.flat().every(sq => sq)) {
+            return 3;
+        }
+    }
+    
     renderWinner(winner) {
         switch (winner) {
             case 1:
@@ -88,36 +110,14 @@ export default class Game {
                 this.gameInfo.innerText = 'Nobody\'s';
         }
     }
-
-    calculateWinner() {
-        for (let winnerLine of this.winnerMatrix) {
-            let valueList = [];
-            for (let [y, x] of winnerLine) {
-                valueList.push(this.squares[y][x]);
-            }
-
-            if (valueList.every(value => value === 'X')) {
-                return 1;
-            } else if (valueList.every(value => value === 'O')) {
-                return 2;
-            }
-        }
-
-        if (this.squares.flat().every(sq => sq)) {
-            return 3;
-        }
-    }
-
+    
     checkWinner() {
         let winner = this.calculateWinner();
         if (winner) {
             this.renderWinner(winner);
-            this.board.removeEventListener('click', this.boardHandler);
+            this.isGameFinished = true;
         }
     }
 
-    initListeners() {
-        this.board.addEventListener('click', this.boardHandler);
-        this.restartButton.addEventListener('click', this.resetHandler);
-    }
+    
 }
